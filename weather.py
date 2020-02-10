@@ -26,9 +26,10 @@ default_args = {
     "catchup": False,
 }
 
-dag = DAG("load_weather_forecast", default_args=default_args, schedule_interval='@hourly')
+dag = DAG("load_weather_forecast", default_args=default_args,
+          schedule_interval='@hourly')
 
-postgres = PostgresHook(postgres_conn_id="rds_connection")
+postgres = PostgresHook(postgres_conn_id="cloud_sql_connection")
 connection = postgres.get_conn()
 
 with connection.cursor() as curs:
@@ -37,7 +38,7 @@ with connection.cursor() as curs:
         curs.execute(query)
     except BaseException as e:
         connection.rollback()
-        raise AirflowException(f"""Query {query} failed""")
+        raise AirflowException(f"""Query {query} failed: {e}""")
     else:
         cities = curs.fetchall()
 
