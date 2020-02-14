@@ -51,7 +51,8 @@ def load_to_s3(type, city, data, bucket_name, s3_connection, kwargs):
         print("Loading data to s3...")
         zipped_data = zip_json(data)
         s3 = S3Hook(aws_conn_id=s3_connection)
-        date_time = datetime.datetime.fromtimestamp(data["ts"]).replace(second=0, microsecond=0).isoformat()
+        date_time = datetime.datetime.fromtimestamp(
+            data["ts"]).replace(second=0, microsecond=0).isoformat()
         key = f'traffic/weather/{city}/{type}/{date_time}.json.gz'
 
         s3.load_bytes(zipped_data,
@@ -70,7 +71,8 @@ def load_to_gcs(type, city, data, bucket_name):
 
         zipped_data = zip_json(data)
         client = authenticate_client()
-        date_time = datetime.datetime.fromtimestamp(data["ts"]).replace(second=0, microsecond=0).isoformat()
+        date_time = datetime.datetime.fromtimestamp(
+            data["ts"]).replace(second=0, microsecond=0).isoformat()
         key = f'traffic/weather/{city}/{type}/{date_time}.json.gz'
 
         bucket = client.get_bucket(bucket_name)
@@ -123,7 +125,11 @@ def transform_forecast(forecast):
 
     currently = forecast["currently"]
 
-    location = {"0": {"type": "Point", "coordinates": [forecast["latitude"], forecast["longitude"]]}}
+    location = {
+        "0": {"type": "Point", "coordinates": [
+            forecast["latitude"], forecast["longitude"]]}
+    }
+
     location = create_jsonlines(location)
 
     current_weather = {
@@ -153,7 +159,8 @@ def transform_alerts(forecast):
 
     alerts = forecast["alerts"]
 
-    location = {"0": {"type": "Point", "coordinates": [alerts["latitude"], alerts["longitude"]]}}
+    location = {"0": {"type": "Point", "coordinates": [
+        alerts["latitude"], alerts["longitude"]]}}
     location = create_jsonlines(location)
 
     alerts_transformed = {

@@ -27,7 +27,8 @@ def load_traffic_incident_details():
 
         data_raw, date = get_incident_details(bounding_box, api_key)
 
-        csvfile, date_transformed = transform_incident_details(csvfile, data_raw, date)
+        csvfile, date_transformed = transform_incident_details(
+            csvfile, data_raw, date)
 
         load_to_gcs(csvfile, date_transformed, bucket_name)
 
@@ -35,7 +36,8 @@ def load_traffic_incident_details():
 def transform_incident_details(csvfile, data, date):
     traffic_model_id = data["tm"]["@id"]
 
-    date_time = datetime.strptime(date, "%a, %d %b %Y %H:%M:%S %Z").replace(second=0, microsecond=0).isoformat()
+    date_time = datetime.strptime(date, "%a, %d %b %Y %H:%M:%S %Z").replace(
+        second=0, microsecond=0).isoformat()
 
     writer = csv.writer(csvfile, encoding="utf-8")
     writer.writerow(["traffic_model_id",
@@ -156,7 +158,8 @@ def load_to_bigquery(data, dataset_id, table_id, bigquery_creds):
     job = client.load_table_from_file(data, table_ref, job_config=job_config)
     job.result()  # Waits for table load to complete.
 
-    logging.info("Loaded {} rows into {}:{}.".format(job.output_rows, dataset_id, table_id))
+    logging.info("Loaded {} rows into {}:{}.".format(
+        job.output_rows, dataset_id, table_id))
 
 
 def get_incident_details(bounding_box, api_key):
