@@ -6,28 +6,44 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.models import Variable
 from airflow.utils import dates
 
-from operators.us_traffic_incident_details import load_traffic_incident_details
+from operators.extract_incedent_details import extract_incedent_details
+from operators.load_incedent_details import load_incedent_details
+from operators.transform_incedent_details import transform_incedent_details
 
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
-    "start_date": datetime.utcnow() - timedelta(minutes=3),
+    "start_date": datetime.utcnow() - timedelta(minutes=6),
     "email": "carless.jerome@gmail.com",
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 0,
-    "retry_delay": timedelta(minutes=1),
+    "provide_context": True,
+    "retries": 2,
+    "retry_delay": timedelta(minutes=2),
 }
 
-dag = DAG("load_traffic_incident_details", default_args=default_args, catchup=False, schedule_interval='*/3 * * * *')
+with DAG("traffic_incedent_details",
+         default_args=default_args,
+         catchup=False,
+         schedule_interval='*/5 * * * *') as dag:
 
-load_traffic_incident_details = PythonOperator(
-    task_id="load_traffic_incident_details",
-    python_callable=load_traffic_incident_details,
-    dag=dag,
-)
+    # Extract
+    extract_incedent_details = PythonOperator(
+        task_id="extract_incedent_details",
+        python_callable=extract_incedent_details,
+    )
+    # Transform
+    transform_incedent_details = PythonOperator(
+        task_id="transform_incedent_details",
+        python_callable=transform_incedent_details,
+    )
 
-[load_traffic_incident_details]
+    # Load
+    load_incedent_details = PythonOperator(
+        task_id="load_incedent_details",
+        python_callable=load_incedent_details,
+    )
+
+    extract_incedent_details >> transform_incedent_details >> load_incedent_details
