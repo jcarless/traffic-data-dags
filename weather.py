@@ -31,7 +31,7 @@ default_args = {
 
 with DAG("weather_forecast",
          default_args=default_args,
-         schedule_interval=@hourly) as dag:
+         schedule_interval="@hourly") as dag:
 
     postgres = PostgresHook(postgres_conn_id="cloud_sql_connection")
     connection = postgres.get_conn()
