@@ -6,28 +6,31 @@ from airflow.models import Variable
 from google.cloud import storage
 
 
-def load_incedent_details(**kwargs):
+def load_incident_details(**kwargs):
 
     logging.info("Loading data to GCS...")
 
     try:
         bucket_name = Variable.get("gcs_bucket")
+
+        temp_folder_path = kwargs["ti"].xcom_pull(
+            key="temp_folder_path", task_ids="geo_locate_cities")
+
         date = kwargs["ti"].xcom_pull(
-            key="transformed_date", task_ids="transform_incedent_details")
-        data = kwargs["ti"].xcom_pull(
-            key="transformed_data", task_ids="transform_incedent_details")
+            key="transformed_date", task_ids="transform_incident_details")
 
         client = authenticate_client()
-        key = f'traffic/incident_details/{date}.csv.gz'
-
-        # Zip File
-        zipped_file = gzip.compress(data.getvalue(), compresslevel=9)
-
         bucket = client.get_bucket(bucket_name)
-        blob = bucket.blob(key)
-        blob.upload_from_string(zipped_file)
+        files = os.listdir(temp_folder_path)
 
-        data.close()
+        for file in files:
+            if file.endswith(".csv.gz"):
+                key = f'traffic/incident_details/{date}/{file}'
+                blob = bucket.blob(key)
+                blob.content_encoding = 'gzip'
+                blob.upload_from_filename(
+                    os.path.join(temp_folder_path, file))
+                logging.info(f"{file} loaded")
 
     except BaseException as e:
         logging.error("Failed to load data to GCS!")
